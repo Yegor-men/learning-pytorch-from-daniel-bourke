@@ -54,16 +54,6 @@ print(f"First element: {TENSOR[0]}")
 
 print()
 
-'''
-for the sake of now on:
-    scalars are prepended by s_
-    vectors are prepended by v_
-    matrices are prepended by m_
-    tensors are prepended by t_
-
-thus drastically reducing complexity and increasing comprehension
-'''
-
 # Random tensors: https://pytorch.org/docs/main/generated/torch.rand.html
 torch.manual_seed(42)
 torch.cuda.manual_seed(42)
@@ -191,4 +181,127 @@ print()
 # torch.randn is normal distribution w/ mean of 0 and stdev of 1
 # torch.rand is uniform distribution between 0 and 1
 
-# time stopped at 2.48.45
+x = torch.arange(0, 100, 10)
+print(f"Tensor: {x}, {x.dtype}")
+print(f"Min: {torch.min(x)}, {x.min()}")
+print(f"Max: {torch.max(x)}, {x.max()}")
+print(f"Mean: {torch.mean(x, dtype = torch.float32)}, {x.mean(dtype = torch.float32)}")
+# mean can't work with int tensors, must be float or complex
+print(f"Sum: {torch.sum(x)}, {x.sum()}")
+
+# argmin and argmax fing the index of the min and max, not their values
+print(f"Argmin: {torch.argmin(x)}, {x.argmin()}, value = {x[x.argmin()]}")
+print(f"Argmax: {torch.argmax(x)}, {x.argmax()}, value = {x[x.argmax()]}")
+
+print()
+
+# reshaping, (viewing) stacking, squeezing and unsqueezing tensors
+
+# reshaping changes the shape
+# viewing does not change the shape
+# stacking stacks tensors on top of each other (v(ertical), h(orizontal), d(epth))
+# squeezing removes dimensions of size 1
+# unsqueezing adds dimensions of size 1
+# permute returns a tensor with dimensions permuted
+# transpose returns a tensor with dimensions transposed
+
+x = torch.arange(1., 10.)
+print(f"Tensor: {x}, {x.shape}")
+print(f"Reshape: {torch.reshape(x, (3, 3))}") # changes the shape and saves to new memory
+print(f"View: {x.view(3, 3)}") # shares the same memory as the original tensor
+# reshape and veiw should have the same number of elements
+print(f"VStack: {torch.vstack([x, x])}")
+print(f"HStack: {torch.hstack([x, x])}")
+print(f"DStack: {torch.dstack([x, x])}")
+print(f"Stack: {torch.stack([x, x], dim = 1)}") # same as dstack, but allows more flexibility
+crap_tensor = torch.randn(3, 1, 4, 1, 5)
+squeezed_tensor = torch.squeeze(crap_tensor)
+unsqueezed_tensor = torch.unsqueeze(crap_tensor, dim = 0)
+print(f"Crap tensor: {crap_tensor.shape}")
+print(f"Squeeze: {squeezed_tensor.shape}") # removes "redundant" dimensions of 1 element
+print(f"Unsqueeze: {unsqueezed_tensor.shape}") # adds a dimension of size 1 at a certain dimension
+reshaped_x = torch.reshape(x, (3, 3))
+to_permute = torch.randn(1, 2, 3, 4, 5)
+permuted = torch.permute(to_permute, (1, 0, 3, 2, 4)) # it is a view, not a copy
+print(f"Before: {to_permute.shape}, after {permuted.shape}") # changes the order of the dimensions
+print(f"Transpose: {reshaped_x.T}")
+
+print()
+
+# Indexing is the same as base python arrays [inclusive]:[exclusive]
+
+x = torch.arange(0, 10, 1)
+print(f"Tensor: {x}, {x.shape}")
+print(f"First element: {x[0]}")
+print(f"Second element: {x[1]}")
+print(f"Last element: {x[-1]}")
+print(f"Second to last element: {x[-2]}")
+print(f"Slice 0:3 {x[0:3]}")
+print(f"Slice 1:4 {x[1:4]}")
+print(f"Slice 1:-2 {x[1:-2]}")
+print(f"Slice :4 {x[:4]}")
+print(f"Slice 1: {x[1:]}")
+print(f"Slice :-1 {x[:-1]}")
+
+print()
+
+new_x = x.reshape(2,5)
+new_x = torch.unsqueeze(new_x, dim = 1) # has to be created as a new tensor
+
+print(f"{new_x.shape}, [1][0][4]: {new_x[1][0][4]}")
+
+# Pytorch tensors and numpy
+
+# change between numpy array and tensors
+
+import numpy as np
+
+array = np.arange(1.0, 8.0)
+tensor = torch.from_numpy(array)
+print(f"Array: {array}, {array.dtype}") # inherits same dtype, also separate instance
+print(f"Tensor: {tensor}, {tensor.dtype}")
+
+# Tensor to numpy
+tensor = torch.ones(7)
+numpy_tensor = tensor.numpy()
+print(f"Tensor: {tensor}, {tensor.dtype}")
+print(f"Tensor to numpy: {numpy_tensor}, {numpy_tensor.dtype}") # inherits same dtype, also separate instance
+
+# reproduceability (setting random seed)
+
+import random
+import torch
+import numpy as np
+
+# Set the random seed for Python's math library
+random.seed(42)
+
+# Set the random seed for PyTorch (CPU and CUDA)
+torch.manual_seed(42)
+torch.cuda.manual_seed_all(42)
+
+# Set the random seed for NumPy
+np.random.seed(42)
+
+# Running stuff on gpu
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"Is cuda available? {torch.cuda.is_available()}")
+print(f"Number of cuda devices: {torch.cuda.device_count()}")
+print(f"Device: {device}")
+
+x = torch.tensor([1, 2, 3],
+                device = device)
+
+print(f"x.device: {x.device}")
+
+# Numpy works only on cpu
+
+# transforming gpu tensor has to be moved to cpu first
+x = x.to("cpu")
+print(f"x: {x.device}")
+x_numpy = x.numpy()
+
+print()
+
+##################### Extra Exercises #####################
+
