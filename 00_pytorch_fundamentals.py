@@ -300,7 +300,8 @@ print(f"x.device: {x.device}")
 x = x.to("cpu")
 print(f"x: {x.device}")
 x_numpy = x.numpy()
-
+x = x.to("cuda")
+print(f"x: {x.device}")
 print()
 
 ##################### Extra Exercises #####################
