@@ -19,3 +19,15 @@ x_dim1
 x_dim2
 etc
 '''
+
+'''
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import torch
+from torch import nn
+from savemodel import save_model
+# save_model(name = , path = )
+from loadmodel import load_model
+# load_model(name = , path = )
+'''

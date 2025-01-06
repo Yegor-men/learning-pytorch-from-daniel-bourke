@@ -5,10 +5,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 # import random
 
-# random.seed(42)
-torch.manual_seed(42)
-torch.cuda.manual_seed_all(42)
-np.random.seed(42)
+seed = 42
+
+# random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+np.random.seed(seed)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -97,7 +99,11 @@ loss_fn = nn.L1Loss()
 optimizer = torch.optim.SGD(model_0.parameters(), lr = 0.01)
 
 # training loop and testing loop
-epochs = 187
+epochs = 500
+
+epoch_count = []
+train_loss_values = []
+validation_loss_values = []
 
 for epoch in range(epochs):
     model_0.train() # turns on the training mode for gradients, 
@@ -113,9 +119,46 @@ for epoch in range(epochs):
     with torch.inference_mode():
         validation_predictions = model_0(validation_x)
         validation_loss = loss_fn(validation_predictions, validation_y)
-    print(f"E-{epoch+1} | Loss: {loss:.4f} | Validation loss: {validation_loss:.4f} | Difference: {loss - validation_loss:.4f}")
+
+    if epoch % 1 == 0:
+        epoch_count.append(epoch)
+        train_loss_values.append(loss)
+        validation_loss_values.append(validation_loss)
+    
+        print(f"E-{epoch}, {(epoch / epochs)*100:.2f}% | Loss: {loss:.6f} | Validation loss: {validation_loss:.6f} | Difference: {loss - validation_loss:.6f}")
 
 
 with torch.inference_mode(): # inference mode turns off gradient tracking
     test_predictions = model_0(test_x)
+# plot_predictions(predictions = test_predictions)
+
+
+train_loss_values_cpu = [loss.item() for loss in train_loss_values]
+validation_loss_values_cpu = [loss.item() for loss in validation_loss_values]
+
+plt.plot(epoch_count, train_loss_values_cpu, label = "Training Loss")
+plt.plot(epoch_count, validation_loss_values_cpu, label = "Validation Loss")
+plt.title("Loss over epochs")
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.legend()
+# plt.show()
+
+# Saving models
+# torch.save() as pickle
+# torch.load()
+# torch.nn.Module.load_state_dict()
+
+from savemodel import save_model
+save_model(name = "01_pytorch_workflow.py", path = "models", model = model_0)
+
+# uses statedict so it needs to be instantiated to the same class model
+from loadmodel import load_model
+loaded_model_0 = LinearRegressionModel()
+load_model(instance = loaded_model_0, path = "models/01_pytorch_workflow_model_0.pth")
+
+loaded_model_0.eval()
+with torch.inference_mode():
+    test_predictions = loaded_model_0(test_x)
+
 plot_predictions(predictions = test_predictions)
