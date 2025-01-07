@@ -78,7 +78,7 @@ class CircleModelV1(nn.Module):
         super().__init__()
         self.layer_1_1 = nn.Linear(
             in_features = 2,
-            out_features = 8
+            out_features = 128
         )
 
         # self.layer_1_2 = nn.Linear(
@@ -88,7 +88,7 @@ class CircleModelV1(nn.Module):
 
         self.layer_1_3 = nn.Linear(
             in_features = 2,
-            out_features = 8
+            out_features = 128
         )
 
         # self.layer_1_4 = nn.Linear(
@@ -97,7 +97,7 @@ class CircleModelV1(nn.Module):
         # )
 
         self.layer_2 = nn.Linear(
-            in_features = 16,
+            in_features = 256,
             out_features = 1
         )
 
@@ -155,7 +155,7 @@ def accuracy_fn(
     acc = (correct/len(predicted_y))*100
     return acc
 
-epochs = 300
+epochs = 100
 
 epoch_count = []
 train_accuracies = []
@@ -192,7 +192,8 @@ for epoch in range(epochs):
     train_losses.append(loss)
     validation_losses.append(validation_loss)
 
-    print(f"E {epoch} - {(epoch/epochs)*100:.2f}% | T acc: {acc:.2f} | V acc: {validation_acc:.2f} | T loss: {loss:.5f} | V loss: {validation_loss:.5f}")
+    if epoch % 10 == 0:
+        print(f"E {epoch} - {(epoch/epochs)*100:.2f}% | T acc: {acc:.2f} | V acc: {validation_acc:.2f} | T loss: {loss:.5f} | V loss: {validation_loss:.5f}")
 
 
 model.eval()
