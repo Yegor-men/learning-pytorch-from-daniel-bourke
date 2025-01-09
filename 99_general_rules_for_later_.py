@@ -31,3 +31,13 @@ from savemodel import save_model
 from loadmodel import load_model
 # load_model(name = , path = )
 '''
+
+'''
+from timeit import default_timer as timer
+
+start = timer()
+end = timer()
+total_time = end - start
+print(f"Total time: {total_time:.5f}s")
+
+'''
