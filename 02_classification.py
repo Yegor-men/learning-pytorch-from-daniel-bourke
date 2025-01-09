@@ -3,8 +3,11 @@ from torch import nn
 import numpy as np
 import matplotlib.pyplot as plt
 import sklearn
+from timeit import default_timer as timer
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
+print(f"Device: {device}")
 
 seed = 42
 
@@ -61,7 +64,6 @@ class SinusActivation(nn.Module):
     def forward(self, x):
         return torch.sin(x)
 
-
 class DivXActivation(nn.Module):
     def __init__(self):
         super().__init__()
@@ -72,65 +74,53 @@ class DivXActivation(nn.Module):
         except ZeroDivisionError:
             return 0
 
+class ModulusX(nn.Module):
+    def __init__(self):
+        super().__init__()
+    
+    def forward(self, x):
+        return torch.abs(x)
+
 
 class CircleModelV1(nn.Module):
     def __init__(self):
         super().__init__()
-        self.layer_1_1 = nn.Linear(
-            in_features = 2,
-            out_features = 128
-        )
-
-        # self.layer_1_2 = nn.Linear(
-        #     in_features = 2,
-        #     out_features = 8
-        # )
-
-        self.layer_1_3 = nn.Linear(
-            in_features = 2,
-            out_features = 128
-        )
-
-        # self.layer_1_4 = nn.Linear(
-        #     in_features = 2,
-        #     out_features = 8
-        # )
-
-        self.layer_2 = nn.Linear(
-            in_features = 256,
-            out_features = 1
-        )
-
-        '''self.two_linear_layers = nn.Sequential(
-            nn.Linear(
-                in_features = 2,
-                out_features = 8
-            ),
-            
-            nn.Linear(
-                in_features = 8,
-                out_features = 1
-            )
-        )''' # not gonna use this for now, better for simplifying more complex architectures
 
         self.leakyrelu = nn.LeakyReLU()
         self.relu = nn.ReLU()
         self.sinus = SinusActivation()
         self.divx = DivXActivation()
+        self.modulus = ModulusX()
 
+        self.layer_1_1 = nn.Linear(
+            in_features = 2,
+            out_features = 16
+        )
+
+        self.layer_1_2 = nn.Sequential(
+            nn.Linear(
+                in_features = 2,
+                out_features = 32
+            ),
+
+            nn.ReLU(),
+
+            nn.Linear(
+                in_features = 32,
+                out_features = 16
+            )
+        )
+
+        self.layer_2 = nn.Linear(
+            in_features = 32,
+            out_features = 1
+        )
     
     def forward(self, x):
-        lyr_1_1 = self.layer_1_1(x)
-        # lyr_1_2 = self.layer_1_2(x)
-        lyr_1_3 = self.layer_1_3(x)
-        # lyr_1_4 = self.layer_1_4(x)
+        lyr_1_1 = self.modulus(self.layer_1_1(x))
+        lyr_1_2 = self.layer_1_2(x)
 
-        lyr_1_1 = self.leakyrelu(lyr_1_1)
-        # lyr_1_2 = self.relu(lyr_1_2)
-        lyr_1_3 = self.sinus(lyr_1_3)
-        # lyr_1_4 = self.divx(lyr_1_4)
-
-        lyr_2 = torch.cat((lyr_1_1, lyr_1_3), dim=1)
+        lyr_2 = self.modulus(torch.cat((lyr_1_1, lyr_1_2), dim=1))
 
         out = self.layer_2(lyr_2)
         
@@ -141,7 +131,7 @@ model = CircleModelV1()
 model.to(device)
 
 loss_fn = nn.BCEWithLogitsLoss() # has softmax built in, is faster computationally
-learning_rate = 0.01
+learning_rate = 1
 optimizer = torch.optim.Adam(
     model.parameters(), 
     lr = learning_rate
@@ -155,13 +145,15 @@ def accuracy_fn(
     acc = (correct/len(predicted_y))*100
     return acc
 
-epochs = 100
+epochs = 300
 
 epoch_count = []
 train_accuracies = []
 validation_accuracies = []
 train_losses = []
 validation_losses = []
+
+start = timer()
 
 for epoch in range(epochs):
     
@@ -192,8 +184,10 @@ for epoch in range(epochs):
     train_losses.append(loss)
     validation_losses.append(validation_loss)
 
-    if epoch % 10 == 0:
-        print(f"E {epoch} - {(epoch/epochs)*100:.2f}% | T acc: {acc:.2f} | V acc: {validation_acc:.2f} | T loss: {loss:.5f} | V loss: {validation_loss:.5f}")
+    # if epoch % 10 == 0:
+    print(f"E {epoch} - {(epoch/epochs)*100:.2f}% | T acc: {acc:.2f} | V acc: {validation_acc:.2f} | T loss: {loss:.5f} | V loss: {validation_loss:.5f}")
+
+end = timer()
 
 
 model.eval()
@@ -206,7 +200,7 @@ with torch.inference_mode():
 
 
 total_params = sum(p.numel() for p in model.parameters())
-print(f"\nTest accuracy: {test_acc:.5f}% | Params: {total_params} | Param/acc: {total_params/test_acc:.5f}")
+print(f"\nTest accuracy: {test_acc:.5f}% | Params: {total_params} | Param/acc: {total_params/test_acc:.5f} | Time: {(end - start):.5f}s")
 
 epoch_count_cpu = epoch_count
 train_accuracies_cpu = train_accuracies
