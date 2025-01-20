@@ -194,5 +194,3 @@ for epoch in tqdm(range(EPOCHS)):
 end = timer()
 
 print(f"\nTime elapsed: {(end - start):.3f}s")
-
-
